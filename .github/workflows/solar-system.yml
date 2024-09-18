@@ -96,3 +96,30 @@ jobs:
             context: .
             push: true
             tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+    
+    dev-deploy:
+        if: contains(github.ref, 'feature/')
+        needs: docker
+        environment: 
+          name: development
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v4
+
+          - name: Install Kubectl CLI
+            uses: azure/setup-kubectl@v4
+            with:
+              version: '1.26.0' # default is latest stable
+            id: install
+          
+          - name: Set Kubeconfig file
+            uses: azure/k8s-set-context@v4
+            with:
+              method: kubeconfig
+              kubeconfig: ${{ secrets.KUBECONFIG }}
+              
+          - name: Fetch Kubernetes Cluster Details
+            run: |
+              kubectl version --short -o yaml
+
